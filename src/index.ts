@@ -1,14 +1,21 @@
 import express from "express";
 import { env } from "./config/env";
 import { logger } from "./lib/logger";
+import authRoutes from "./routes/auth.routes";
+import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
 
 app.use(express.json());
 
+app.use("/auth", authRoutes);
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+// Global Error Handler
+app.use(errorHandler);
 
 const server = app.listen(env.PORT, () => {
   logger.info(`🚀 Server ready at http://localhost:${env.PORT}`);
