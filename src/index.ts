@@ -1,12 +1,10 @@
 import express from "express";
-import pinoHttp from "pino-http";
 import { env } from "./config/env";
 import { logger } from "./lib/logger";
 
 const app = express();
 
 app.use(express.json());
-app.use(pinoHttp({ logger }));
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
