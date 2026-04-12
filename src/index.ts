@@ -1,28 +1,9 @@
-import express from "express";
+import app from "./app";
 import { env } from "./config/env";
 import { logger } from "./lib/logger";
-import authRoutes from "./routes/auth.routes";
-import projectRoutes from "./routes/project.routes";
-import taskRoutes from "./routes/task.routes";
-import { errorHandler } from "./middleware/error.middleware";
-
-const app = express();
-
-app.use(express.json());
-
-app.use("/auth", authRoutes);
-app.use("/projects", projectRoutes);
-app.use("/", taskRoutes);
-
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-// Global Error Handler
-app.use(errorHandler);
 
 const server = app.listen(env.PORT, () => {
-  logger.info(`🚀 Server ready at http://localhost:${env.PORT}`);
+  logger.info(`🚀 Server ready at http://localhost:${env.PORT}/health`);
 });
 
 const shutdown = () => {
