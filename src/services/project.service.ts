@@ -6,24 +6,33 @@ export class ProjectService {
   static async getProjects(userId: string, page: number = 1, limit: number = 10) {
     const offset = (page - 1) * limit;
 
-    // List projects current user owns
-    // According to requirement: List projects the current user owns or has tasks in.
-    // We'll refine this as we add tasks, for now projects owned by user.
     const projectsQuery = db("projects")
       .where("owner_id", userId)
+      .orWhereExists(function () {
+        this.select("*")
+          .from("tasks")
+          .whereRaw("tasks.project_id = projects.id")
+          .andWhere("tasks.assignee_id", userId);
+      })
       .limit(limit)
       .offset(offset)
-      .orderBy("created_at", "desc");
+      .orderBy("projects.created_at", "desc");
 
     const countQuery = db("projects")
       .where("owner_id", userId)
-      .count("id as total")
+      .orWhereExists(function () {
+        this.select("*")
+          .from("tasks")
+          .whereRaw("tasks.project_id = projects.id")
+          .andWhere("tasks.assignee_id", userId);
+      })
+      .count("projects.id as total")
       .first();
 
     const [projects, count] = await Promise.all([projectsQuery, countQuery]);
 
     return {
-      projects,
+      data: projects,
       pagination: {
         page,
         limit,
@@ -32,20 +41,34 @@ export class ProjectService {
     };
   }
 
+  static async hasAccess(projectId: string, userId: string) {
+    const project = await db("projects").where({ id: projectId }).first();
+    if (!project) return null;
+
+    if (project.owner_id === userId) return project;
+
+    const assignedTask = await db("tasks")
+      .where({ project_id: projectId, assignee_id: userId })
+      .first();
+
+    if (assignedTask) return project;
+
+    return null;
+  }
+
   static async getProjectById(id: string, userId: string) {
-    const project = await db("projects").where({ id }).first();
+    const project = await this.hasAccess(id, userId);
 
-    if (!project) {
-      throw new NotFoundError("Project not found");
-    }
-
-    if (project.owner_id !== userId) {
-      // Also check if user has tasks in this project (future)
+    if (project === null) {
+      // Check if project exists at all to return 404 vs 403
+      const exists = await db("projects").where({ id }).first();
+      if (!exists) throw new NotFoundError("Project not found");
       throw new ForbiddenError("You do not have access to this project");
     }
 
     return project;
   }
+
 
   static async createProject(data: CreateProjectInput, userId: string) {
     const [project] = await db("projects")

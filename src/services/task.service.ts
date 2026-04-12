@@ -1,20 +1,21 @@
 import db from "../lib/db";
 import { CreateTaskInput, UpdateTaskInput, TaskFilterInput } from "../schemas/task";
 import { NotFoundError, ForbiddenError } from "../lib/errors";
+import { ProjectService } from "./project.service";
 
 export class TaskService {
   static async verifyProjectAccess(projectId: string, userId: string) {
-    const project = await db("projects").where({ id: projectId }).first();
-    if (!project) {
-      throw new NotFoundError("Project not found");
-    }
-  
-    if (project.owner_id !== userId) {
-      // In the future, we could also check if the user is assigned to any task in this project
+    const project = await ProjectService.hasAccess(projectId, userId);
+
+    if (project === null) {
+      const exists = await db("projects").where({ id: projectId }).first();
+      if (!exists) throw new NotFoundError("Project not found");
       throw new ForbiddenError("You do not have access to this project");
     }
+
     return project;
   }
+
 
   static async getTasks(projectId: string, filters: TaskFilterInput, userId: string) {
     await this.verifyProjectAccess(projectId, userId);
