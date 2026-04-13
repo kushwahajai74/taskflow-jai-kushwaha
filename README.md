@@ -24,7 +24,7 @@ The easiest way to get the app running is via Docker. You only need a PostgreSQL
 ```bash
 # 1. Clone the repository
 git clone https://github.com/kushwahajai74/taskflow-jai-kushwaha.git
-cd taskflow
+cd taskflow-jai-kushwaha
 
 # 2. Setup environment variables
 cp .env.example .env
