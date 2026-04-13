@@ -32,7 +32,7 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Copy the environment file for database configuration
-COPY .env ./.env
+COPY .env* ./
 
 # Copy the entrypoint script that runs migrations then starts the server.
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
