@@ -2,7 +2,12 @@ import type { Knex } from "knex";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+// Load environment variables - handle both dev (ts-node) and prod (compiled JS)
+const envPath = process.env.NODE_ENV === 'production' 
+  ? path.resolve(__dirname, "../.env")
+  : path.resolve(process.cwd(), ".env");
+
+dotenv.config({ path: envPath });
 
 const config: Knex.Config = {
   client: "pg",
